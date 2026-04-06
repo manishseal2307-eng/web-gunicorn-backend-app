@@ -1,9 +1,69 @@
 from flask import Flask, request, jsonify
 import requests
 from collections import OrderedDict
+import sqlite3
+from datetime import datetime
+import os
 
 app = Flask(__name__)
 app.json.sort_keys = False
+
+# ---------------- DATABASE ---------------- #
+
+DB_NAME = "history.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        food_name TEXT,
+        sugar REAL,
+        sodium REAL,
+        fat REAL,
+        protein REAL,
+        calories REAL,
+        health_score INTEGER,
+        category TEXT,
+        verdict TEXT,
+        image TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+
+def save_to_history(data, score, category, verdict):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    INSERT INTO history (
+        food_name, sugar, sodium, fat, protein, calories,
+        health_score, category, verdict, image, timestamp
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        data["name"],
+        data["sugar"],
+        data["sodium"],
+        data["fat"],
+        data["protein"],
+        data["calories"],
+        score,
+        category,
+        verdict,
+        data.get("image", ""),
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conn.commit()
+    conn.close()
 
 # ---------------- HEALTH LOGIC ---------------- #
 
@@ -14,6 +74,8 @@ def calculate_score(sugar, sodium, fat):
         score -= 2
     if sugar > 20:
         score -= 3
+    if sugar > 40:
+        score -= 2
 
     if sodium > 300:
         score -= 2
@@ -25,33 +87,38 @@ def calculate_score(sugar, sodium, fat):
 
     return max(score, 0)
 
+
 def get_category(score):
     return "Safe" if score >= 7 else "Moderate" if score >= 4 else "Avoid"
 
-# ---------------- PERSONALIZED ALERTS ---------------- #
 
-def get_alerts(sugar, sodium, mode):
+def get_verdict(score):
+    return (
+        "✅ Safe to consume"
+        if score >= 7 else
+        "⚠️ Consume in moderation"
+        if score >= 4 else
+        "🚫 Avoid this product"
+    )
+
+
+def get_color(score):
+    return "green" if score >= 7 else "orange" if score >= 4 else "red"
+
+# ---------------- ALERTS ---------------- #
+
+def get_alerts(sugar, sodium):
     alerts = []
 
-    if mode == "diabetes":
-        alerts.append("High sugar – Not recommended" if sugar > 15 else "Safe for Diabetes")
+    if sugar > 40:
+        alerts.append("⚠️ Extremely high sugar – Avoid completely")
+    elif sugar > 15:
+        alerts.append("⚠️ High sugar – Limit intake")
 
-    elif mode == "bp":
-        alerts.append("High sodium – Not recommended" if sodium > 500 else "Safe for BP")
-
-    elif mode == "fitness":
-        alerts.append("Check protein and fat for fitness goals")
-
-    else:
-        if sugar > 15:
-            alerts.append("Not recommended for Diabetes")
-        else:
-            alerts.append("Safe for Diabetes (limit intake)")
-
-        if sodium > 500:
-            alerts.append("Not recommended for BP")
-        else:
-            alerts.append("Safe for BP (limit intake)")
+    if sodium > 600:
+        alerts.append("⚠️ Very high sodium – Risk for BP")
+    elif sodium > 300:
+        alerts.append("⚠️ Moderate sodium – Be careful")
 
     return alerts
 
@@ -59,18 +126,74 @@ def get_alerts(sugar, sodium, mode):
 
 def get_daily_limits(sugar, sodium):
     return {
-        "sugar_%": round((sugar / 25) * 100, 2),
-        "sodium_%": round((sodium / 2000) * 100, 2)
+        "sugar_%": min(round((sugar / 25) * 100, 2), 100),
+        "sodium_%": min(round((sodium / 2000) * 100, 2), 100)
     }
 
-# ---------------- LOCAL PRODUCTS ---------------- #
+# ---------------- ALTERNATIVES ---------------- #
+
+PRODUCT_ALTERNATIVES = {
+    "maggi": ["Oats", "Vegetable Upma"],
+    "lays": ["Roasted Makhana", "Baked Chips"],
+    "kurkure": ["Roasted Snacks"],
+    "oreo": ["Dark Chocolate"],
+    "dairy milk": ["Dark Chocolate (70%)"]
+}
+
+HEALTHY_ALTERNATIVES = {
+    "high_sugar": ["Fruits", "Oats"],
+    "high_sodium": ["Roasted Chana"],
+    "high_fat": ["Popcorn"]
+}
+
+def suggest_alternatives(name, sugar, sodium, fat):
+    name = name.lower()
+
+    for key in PRODUCT_ALTERNATIVES:
+        if key in name:
+            return PRODUCT_ALTERNATIVES[key]
+
+    suggestions = []
+
+    if sugar > 15:
+        suggestions.extend(HEALTHY_ALTERNATIVES["high_sugar"])
+    if sodium > 500:
+        suggestions.extend(HEALTHY_ALTERNATIVES["high_sodium"])
+    if fat > 20:
+        suggestions.extend(HEALTHY_ALTERNATIVES["high_fat"])
+
+    return list(set(suggestions))
+
+# ---------------- LOCAL DATA ---------------- #
 
 INDIAN_PRODUCTS = {
-    "maggi": {"name": "Maggi Noodles", "sugar": 1.8, "sodium": 1000, "fat": 12.5, "protein": 8.2, "calories": 384},
-    "lays": {"name": "Lays Chips", "sugar": 1.0, "sodium": 600, "fat": 35, "protein": 6, "calories": 536},
-    "kurkure": {"name": "Kurkure", "sugar": 3.0, "sodium": 700, "fat": 30, "protein": 6, "calories": 520},
-    "oreo": {"name": "Oreo", "sugar": 38, "sodium": 270, "fat": 20, "protein": 5, "calories": 520},
-    "dairy milk": {"name": "Dairy Milk", "sugar": 56, "sodium": 80, "fat": 30, "protein": 7, "calories": 534}
+    "kurkure": {
+        "name": "Kurkure",
+        "sugar": 1.0,
+        "sodium": 892,
+        "fat": 34.6,
+        "protein": 6.4,
+        "calories": 558,
+        "image": "https://m.media-amazon.com/images/I/81z5Z6n6VxL.jpg"
+    },
+    "oreo": {
+        "name": "Oreo",
+        "sugar": 38.9,
+        "sodium": 200,
+        "fat": 19.6,
+        "protein": 5.2,
+        "calories": 483,
+        "image": "https://m.media-amazon.com/images/I/71s6KXyF5VL.jpg"
+    },
+    "lays": {
+        "name": "Lays Chips",
+        "sugar": 1.2,
+        "sodium": 650,
+        "fat": 34.0,
+        "protein": 6.0,
+        "calories": 536,
+        "image": "https://m.media-amazon.com/images/I/61XzLZ5wFLL.jpg"
+    }
 }
 
 # ---------------- FETCH API ---------------- #
@@ -78,53 +201,55 @@ INDIAN_PRODUCTS = {
 def fetch_product(barcode):
     try:
         url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
-        response = requests.get(url, timeout=5)
+
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=5
+        )
 
         if response.status_code != 200:
             return None
 
         data = response.json()
 
-        if data.get('status') != 1:
+        if data.get("status") == 0:
             return None
 
-        product = data.get('product', {})
-        nutriments = product.get('nutriments', {})
+        product = data.get("product", {})
+        nutriments = product.get("nutriments", {})
 
         return {
-            "name": product.get('product_name', 'Unknown'),
-            "sugar": float(nutriments.get('sugars_100g', 0)),
-            "sodium": float(nutriments.get('sodium_100g', 0)) * 1000,
-            "fat": float(nutriments.get('fat_100g', 0)),
-            "protein": float(nutriments.get('proteins_100g', 0)),
-            "calories": float(nutriments.get('energy-kcal_100g', 0))
+            "name": product.get("product_name", "Unknown"),
+            "sugar": float(nutriments.get("sugars_100g", 0)),
+            "sodium": float(nutriments.get("sodium_100g", 0)) * 1000,
+            "fat": float(nutriments.get("fat_100g", 0)),
+            "protein": float(nutriments.get("proteins_100g", 0)),
+            "calories": float(nutriments.get("energy-kcal_100g", 0)),
+            "image": product.get("image_front_url") or product.get("image_url"),
+            "data_source": "api"
         }
 
-    except Exception as e:
-        print("API Error:", e)
+    except:
         return None
 
-# ---------------- ROUTE ---------------- #
+# ---------------- ROUTES ---------------- #
 
 @app.route('/analyze')
 def analyze():
-
     barcode = request.args.get('barcode')
     name = request.args.get('name')
-    mode = request.args.get('mode', 'general')
 
     data = None
 
-    # 1️⃣ Try API
     if barcode:
         data = fetch_product(barcode)
 
-    # 2️⃣ SMART SEARCH (FIXED 🔥)
     if not data and name:
         name_lower = name.lower()
-        for key in INDIAN_PRODUCTS:
+        for key, value in INDIAN_PRODUCTS.items():
             if key in name_lower:
-                data = INDIAN_PRODUCTS[key]
+                data = value
                 break
 
     if not data:
@@ -134,6 +259,8 @@ def analyze():
 
     response = OrderedDict()
     response["food_name"] = data["name"]
+    response["image"] = data.get("image", "")
+
     response["sugar"] = round(data["sugar"], 2)
     response["sodium"] = round(data["sodium"], 2)
     response["protein"] = round(data["protein"], 2)
@@ -141,18 +268,43 @@ def analyze():
     response["fat"] = round(data["fat"], 2)
     response["health_score"] = score
     response["category"] = get_category(score)
-
-    # ✅ Personalized alerts
-    response["alerts"] = get_alerts(data["sugar"], data["sodium"], mode)
-
-    # ✅ Daily intake
+    response["verdict"] = get_verdict(score)
+    response["color"] = get_color(score)
+    response["alerts"] = get_alerts(data["sugar"], data["sodium"])
     response["daily_intake"] = get_daily_limits(data["sugar"], data["sodium"])
+    response["healthy_alternatives"] = suggest_alternatives(
+        data["name"], data["sugar"], data["sodium"], data["fat"]
+    )
+    response["data_source"] = data.get("data_source", "local")
+
+    save_to_history(data, score, response["category"], response["verdict"])
 
     return jsonify(response)
 
-# ---------------- RUN ---------------- #
+@app.route('/history')
+def history():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
 
+    cursor.execute("SELECT * FROM history ORDER BY id DESC")
+    rows = cursor.fetchall()
+    conn.close()
+
+    result = []
+    for row in rows:
+        result.append({
+            "id": row[0],
+            "food_name": row[1],
+            "health_score": row[7],
+            "category": row[8],
+            "verdict": row[9],
+            "image": row[10],
+            "timestamp": row[11]
+        })
+
+    return jsonify(result)
+
+# ---------------- RUN ---------------- #
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
