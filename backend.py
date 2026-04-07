@@ -200,6 +200,16 @@ INDIAN_PRODUCTS = {
 "calories": 558,
 "image": "https://m.media-amazon.com/images/I/81z5Z6n6VxL.jpg"
 },
+"p4_pepsi": {
+    "name": "Pepsi",
+    "category": "Soft Drink",
+    "sugar": 11.0,
+    "sodium": 7,
+    "fat": 0,
+    "protein": 0,
+    "calories": 42,
+    "image": ""
+},
 "lays": {
 "name": "Lays Chips",
 "sugar": 1.2,
@@ -341,8 +351,11 @@ if barcode:
 
 if not data and name:
     name_lower = name.lower()
+
     for key, value in INDIAN_PRODUCTS.items():
-        if key in name_lower or name_lower in key:
+        product_name = value["name"].lower()
+
+        if name_lower in product_name or product_name in name_lower:
             data = value
             break
 
@@ -403,7 +416,7 @@ return jsonify(result)
 ```
 
 # ---------------- RUN ----------------
-a
+
 if **name** == '**main**':
 port = int(os.environ.get("PORT", 5000))
 app.run(host='0.0.0.0', port=port)
