@@ -142,11 +142,16 @@ PRODUCT_ALTERNATIVES = {
 
 HEALTHY_ALTERNATIVES = {
     "high_sugar": ["Fruits", "Oats"],
+    "drinks": [
+        "Coconut Water",
+        "Lemon Water",
+        "Fresh Juice (No Sugar)"
+    ],
     "high_sodium": ["Roasted Chana"],
     "high_fat": ["Popcorn"]
 }
 
-def suggest_alternatives(name, sugar, sodium, fat):
+def suggest_alternatives(name, sugar, sodium, fat, category=""):
     name = name.lower()
 
     for key in PRODUCT_ALTERNATIVES:
@@ -154,6 +159,9 @@ def suggest_alternatives(name, sugar, sodium, fat):
             return PRODUCT_ALTERNATIVES[key]
 
     suggestions = []
+
+    if "drink" in name or "drink" in category:
+        suggestions.extend(HEALTHY_ALTERNATIVES["drinks"])
 
     if sugar > 15:
         suggestions.extend(HEALTHY_ALTERNATIVES["high_sugar"])
@@ -165,37 +173,430 @@ def suggest_alternatives(name, sugar, sodium, fat):
     return list(set(suggestions))
 
 # ---------------- LOCAL DATA ---------------- #
-
 INDIAN_PRODUCTS = {
-    "kurkure": {
+
+   #----------snacks---------#
+
+     "kurkure": {
         "name": "Kurkure",
+        "category": "Snack", 
         "sugar": 1.0,
         "sodium": 892,
         "fat": 34.6,
         "protein": 6.4,
         "calories": 558,
-        "image": "https://m.media-amazon.com/images/I/81z5Z6n6VxL.jpg"
+        "image": "https://m.media-amazon.com/images/I/81z5Z6n6VxL.jpg",
+        "barcode": "8901491435109"
     },
-    "oreo": {
-        "name": "Oreo",
-        "sugar": 38.9,
-        "sodium": 200,
-        "fat": 19.6,
-        "protein": 5.2,
-        "calories": 483,
-        "image": "https://m.media-amazon.com/images/I/71s6KXyF5VL.jpg"
-    },
+
     "lays": {
         "name": "Lays Chips",
+        "category": "Snack", 
         "sugar": 1.2,
         "sodium": 650,
         "fat": 34.0,
         "protein": 6.0,
         "calories": 536,
-        "image": "https://m.media-amazon.com/images/I/61XzLZ5wFLL.jpg"
+        "image": "https://m.media-amazon.com/images/I/61XzLZ5wFLL.jpg",
+        "barcode": "8901491101103"
+    },
+
+    "aloo_bhujia": {
+        "name": "Aloo Bhujia",
+        "category": "Snack",
+        "sugar": 0.25,
+        "sodium": 615,
+        "fat": 38.12,
+        "protein": 8.68,
+        "calories": 562,
+        "image": "",
+        "barcode": "8904004400687"
+    },
+
+    "bingo": {
+        "name": "Bingo Chips",
+        "category": "Snack",
+        "sugar": 6,
+        "sodium": 758,
+        "fat": 29.5,
+        "protein": 5.6,
+        "calories": 526,
+        "image": "",
+        "barcode": "8901725181220"
+    },
+
+    "uncle_chips": {
+        "name": "Uncle Chips",
+        "category": "Snack",
+        "sugar": 0.6,
+        "sodium": 591,
+        "fat": 35,
+        "protein": 6.7,
+        "calories": 550,
+        "image": "",
+        "barcode": "8901491435109"
+    },
+
+    "doritos": {
+        "name": "Doritos",
+        "category": "Snack",
+        "sugar": 4.5,
+        "sodium": 605,
+        "fat": 23.4,
+        "protein": 7.1,
+        "calories": 499,
+        "image": "",
+        "barcode": "8901491102100"
+    },
+
+    "too_yumm": {
+        "name": "Too Yumm Chips",
+        "category": "Snack",
+        "sugar": 8.5,
+        "sodium": 880,
+        "fat": 18.3,
+        "protein": 7.9,
+        "calories": 464,
+        "image": "",
+        "barcode": "8906090572064"
+    },
+
+    "britannia_cake": {
+        "name": "Britannia Little Roll Cake",
+        "category": "Cake",
+        "sugar": 30.2,
+        "sodium": 252.6,
+        "fat": 17.3,
+        "protein": 5.7,
+        "calories": 415,
+        "image": "",
+        "barcode": "8901063363779"
+    },
+
+    "paper_boat": {
+        "name": "Paper Boat Drink",
+        "category": "Drink",
+        "sugar": 13.0,
+        "sodium": 40,
+        "fat": 0,
+        "protein": 0,
+        "calories": 52.8,
+        "image": "",
+        "barcode": "8906080600647"
+    },
+
+    "coca_cola": {
+        "name": "Coca Cola",
+        "category": "Soft Drink",
+        "sugar": 10.6,
+        "sodium": 8.5,
+        "fat": 0,
+        "protein": 0,
+        "calories": 44,
+        "image": "",
+        "barcode": "8901764031016"
+    },
+
+    "pepsi": {
+        "name": "Pepsi",
+        "category": "Soft Drink",
+        "sugar": 10.9,
+        "sodium": 3,
+        "fat": 0,
+        "protein": 0,
+        "calories": 43,
+        "image": "",
+        "barcode": "8902080015000"
+    },
+
+    "maaza": {
+        "name": "Maaza Mango Drink",
+        "category": "Fruit Drink",
+        "sugar": 14.9,
+        "sodium": 21.9,
+        "fat": 0,
+        "protein": 0,
+        "calories": 63,
+        "image": "",
+        "barcode": "8901764092305"
+    },
+
+    "frooti": {
+        "name": "Frooti",
+        "category": "Fruit Drink",
+        "sugar": 15.6,
+        "sodium": 24.2,
+        "fat": 0,
+        "protein": 0,
+        "calories": 63.2,
+        "image": "",
+        "barcode": "8902579103057"
+    },
+
+    "slice": {
+        "name": "Slice Mango Drink",
+        "category": "Fruit Drink",
+        "sugar": 10.8,
+        "sodium": 73,
+        "fat": 0,
+        "protein": 0,
+        "calories": 50,
+        "image": "",
+        "barcode": "8902080404575"
+    },
+
+    "redbull": {
+        "name": "Red Bull",
+        "category": "Energy Drink",
+        "sugar": 39,
+        "sodium": 150,
+        "fat": 0,
+        "protein": 0,
+        "calories": 160,
+        "image": "",
+        "barcode": "9002490100070"
+    },
+
+    "monster": {
+        "name": "Monster Energy",
+        "category": "Energy Drink",
+        "sugar": 0,
+        "sodium": 370,
+        "fat": 0,
+        "protein": 0,
+        "calories": 10,
+        "image": "",
+        "barcode": "5060337502719"
+    },
+
+    "tiger_biscuit": {
+        "name": "Britannia Tiger Biscuit",
+        "category": "Biscuit",
+        "sugar": 38.3,
+        "sodium": 119,
+        "fat": 20.3,
+        "protein": 5,
+        "calories": 493.5,
+        "image": "",
+        "barcode": "8901063155411"
+    },
+
+    "good_day": {
+        "name": "Good Day Biscuit",
+        "category": "Biscuit",
+        "sugar": 35.1,
+        "sodium": 97.4,
+        "fat": 24.8,
+        "protein": 6.4,
+        "calories": 438,
+        "image": "",
+        "barcode": "8901063093287"
+    },
+
+    "bourbon": {
+        "name": "Bourbon Biscuit",
+        "category": "Biscuit",
+        "sugar": 60.5,
+        "sodium": 151,
+        "fat": 15.9,
+        "protein": 3.3,
+        "calories": 447,
+        "image": "",
+        "barcode": "6161101251884"
+    },
+
+    "chocobakes": {
+        "name": "Chocobakes",
+        "category": "Biscuit",
+        "sugar": 40.3,
+        "sodium": 203,
+        "fat": 21.9,
+        "protein": 3.8,
+        "calories": 466,
+        "image": "",
+        "barcode": "7622201098971"
+    },
+
+    "hide_and_seek": {
+        "name": "Hide & Seek",
+        "category": "Biscuit",
+        "sugar": 32.2,
+        "sodium": 50,
+        "fat": 18,
+        "protein": 5.9,
+        "calories": 479,
+        "image": "",
+        "barcode": "8901719104046"
+    },
+
+    "marie_gold": {
+        "name": "Marie Gold",
+        "category": "Biscuit",
+        "sugar": 21.2,
+        "sodium": 316,
+        "fat": 10.6,
+        "protein": 7.9,
+        "calories": 445,
+        "image": "",
+        "barcode": "8901063162211"
+    },
+
+    "little_hearts": {
+        "name": "Little Hearts",
+        "category": "Biscuit",
+        "sugar": 24,
+        "sodium": 309,
+        "fat": 19.5,
+        "protein": 7.4,
+        "calories": 486,
+        "image": "",
+        "barcode": "8901063203198"
+    },
+
+    "dark_fantasy": {
+        "name": "Dark Fantasy",
+        "category": "Biscuit",
+        "sugar": 37.6,
+        "sodium": 150,
+        "fat": 25,
+        "protein": 5.7,
+        "calories": 504,
+        "image": "",
+        "barcode": "8901063173017"
+    },
+
+    "dairy_milk": {
+        "name": "Dairy Milk",
+        "category": "Chocolate",
+        "sugar": 57,
+        "sodium": 129,
+        "fat": 29,
+        "protein": 7.9,
+        "calories": 531,
+        "image": "",
+        "barcode": "7622210063465"
+    },
+
+    "kitkat": {
+        "name": "KitKat",
+        "category": "Chocolate",
+        "sugar": 39.3,
+        "sodium": 84.8,
+        "fat": 23.4,
+        "protein": 5.5,
+        "calories": 469,
+        "image": "",
+        "barcode": "8901058899999"
+    },
+
+    "munch": {
+        "name": "Munch",
+        "category": "Chocolate",
+        "sugar": 45.1,
+        "sodium": 103,
+        "fat": 25.2,
+        "protein": 4.7,
+        "calories": 513,
+        "image": "",
+        "barcode": "8901058843323"
+    },
+
+    "perk": {
+        "name": "Perk",
+        "category": "Chocolate",
+        "sugar": 39.3,
+        "sodium": 84.8,
+        "fat": 23.4,
+        "protein": 5.5,
+        "calories": 469,
+        "image": "",
+        "barcode": "7622201758660"
+    },
+
+    "5star": {
+        "name": "5 Star",
+        "category": "Chocolate",
+        "sugar": 39.3,
+        "sodium": 84.8,
+        "fat": 23.4,
+        "protein": 5.5,
+        "calories": 469,
+        "image": "",
+        "barcode": "7622210622211"
+    },
+
+    "kellogs_muesli": {
+        "name": "Kellogs Muesli",
+        "category": "Healthy Food",
+        "sugar": 10.7,
+        "sodium": 132,
+        "fat": 5.2,
+        "protein": 9.3,
+        "calories": 382,
+        "image": "",
+        "barcode": "5053827182447"
+    },
+
+    "quaker_oats": {
+        "name": "Quaker Oats",
+        "category": "Healthy Food",
+        "sugar": 1,
+        "sodium": 2,
+        "fat": 7,
+        "protein": 13,
+        "calories": 389,
+        "image": "",
+        "barcode": "5000108022152"
+    },
+
+    "peanut_butter": {
+        "name": "Sunfeast Peanut Butter",
+        "category": "Healthy Spread",
+        "sugar": 8.9,
+        "sodium": 310,
+        "fat": 52.4,
+        "protein": 25,
+        "calories": 637,
+        "image": "",
+        "barcode": "8901512881106"
+    },
+
+    "amul_milk": {
+        "name": "Amul Milk",
+        "category": "Dairy",
+        "sugar": 5,
+        "sodium": 150,
+        "fat": 3,
+        "protein": 3.5,
+        "calories": 35,
+        "image": "",
+        "barcode": "8901262150064"
+    },
+
+    "yippee": {
+        "name": "Yippee Noodles",
+        "category": "Instant Food",
+        "sugar": 5.7,
+        "sodium": 300,
+        "fat": 21.14,
+        "protein": 8.2,
+        "calories": 474,
+        "image": "",
+        "barcode": "8901014003181"
+    },
+
+    "maggi": {
+        "name": "Maggi",
+        "category": "Instant Food",
+        "sugar": 1.8,
+        "sodium": 1000,
+        "fat": 12.5,
+        "protein": 8.2,
+        "calories": 384,
+        "image": "",
+        "barcode": "8901058000336"
     }
 }
-
 # ---------------- FETCH API ---------------- #
 
 def fetch_product(barcode):
@@ -234,7 +635,6 @@ def fetch_product(barcode):
         return None
 
 # ---------------- ROUTES ---------------- #
-
 @app.route('/analyze')
 def analyze():
     barcode = request.args.get('barcode')
@@ -242,16 +642,26 @@ def analyze():
 
     data = None
 
+    # 1️⃣ Search in LOCAL DB using barcode
     if barcode:
-        data = fetch_product(barcode)
-
-    if not data and name:
-        name_lower = name.lower()
-        for key, value in INDIAN_PRODUCTS.items():
-            if key in name_lower:
+        for value in INDIAN_PRODUCTS.values():
+            if value.get("barcode") == barcode:
                 data = value
                 break
 
+    # 2️⃣ Fallback to API
+    if not data and barcode:
+        data = fetch_product(barcode)
+
+    # 3️⃣ Search by name
+    if not data and name:
+        name_lower = name.lower()
+        for key, value in INDIAN_PRODUCTS.items():
+            if key in name_lower or name_lower in key:
+                data = value
+                break
+
+    # 4️⃣ Not found
     if not data:
         return jsonify({"error": "Product not found"})
 
@@ -260,6 +670,7 @@ def analyze():
     response = OrderedDict()
     response["food_name"] = data["name"]
     response["image"] = data.get("image", "")
+    response["category_type"] = data.get("category", "Unknown")
 
     response["sugar"] = round(data["sugar"], 2)
     response["sodium"] = round(data["sodium"], 2)
@@ -273,7 +684,7 @@ def analyze():
     response["alerts"] = get_alerts(data["sugar"], data["sodium"])
     response["daily_intake"] = get_daily_limits(data["sugar"], data["sodium"])
     response["healthy_alternatives"] = suggest_alternatives(
-        data["name"], data["sugar"], data["sodium"], data["fat"]
+        data["name"], data["sugar"], data["sodium"], data["fat"], data.get("category", "")
     )
     response["data_source"] = data.get("data_source", "local")
 
@@ -281,30 +692,8 @@ def analyze():
 
     return jsonify(response)
 
-@app.route('/history')
-def history():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM history ORDER BY id DESC")
-    rows = cursor.fetchall()
-    conn.close()
-
-    result = []
-    for row in rows:
-        result.append({
-            "id": row[0],
-            "food_name": row[1],
-            "health_score": row[7],
-            "category": row[8],
-            "verdict": row[9],
-            "image": row[10],
-            "timestamp": row[11]
-        })
-
-    return jsonify(result)
-
 # ---------------- RUN ---------------- #
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
